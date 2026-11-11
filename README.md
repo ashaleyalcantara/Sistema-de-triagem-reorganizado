@@ -22,10 +22,12 @@ O projeto utiliza:
 
 Para executar o projeto, é necessário ter instalado:
 
-- PHP 8.3 ou superior;
+- Laragon (Apache + PHP 8.3);
 - Composer;
 - Node.js;
 - NPM.
+
+O projeto foi desenvolvido e testado no Laragon, no Windows, com PHP 8.3 e SQLite.
 
 ### Instalação
 
@@ -42,11 +44,7 @@ Instale as dependências do PHP:
 composer install
 ```
 
-Instale as dependências do frontend:
-
-```bash
-npm install
-```
+> No Laragon, se a instalação estiver muito lenta, habilite `extension=zip` no `php.ini`. Sem essa extensão, o Composer tende a baixar alguns pacotes via source.
 
 Crie o arquivo de configuração do ambiente a partir do arquivo de exemplo:
 
@@ -60,23 +58,83 @@ Gere a chave da aplicação:
 php artisan key:generate
 ```
 
-O projeto utiliza SQLite como banco de dados na configuração padrão. Após configurar o ambiente, execute as migrations:
+O projeto utiliza SQLite como banco de dados na configuração padrão (`DB_CONNECTION=sqlite`). Crie o arquivo do banco:
+
+```bash
+touch database/database.sqlite
+```
+
+Execute as migrations:
 
 ```bash
 php artisan migrate
 ```
 
-Para iniciar a aplicação:
+Popule o banco com os dados de teste. O `DatabaseSeeder` chama o `HospitalSeeder`, que cria funcionários e pacientes de exemplo:
+
+```bash
+php artisan db:seed
+```
+
+Se preferir executar apenas o seeder do hospital:
+
+```bash
+php artisan db:seed --class=HospitalSeeder
+```
+
+Crie o link simbólico do storage, necessário para as fotos de perfil:
+
+```bash
+php artisan storage:link
+```
+
+Instale as dependências do frontend e gere os assets de produção:
+
+```bash
+npm install
+npm run build
+```
+
+> `npm run dev` é opcional e serve apenas para desenvolvimento com recarregamento automático. Para o uso normal no Laragon, utilize `npm run build`.
+
+### Execução no Laragon
+
+O vhost do Laragon deve apontar o **DocumentRoot** para a pasta `public` do projeto. A configuração já criada fica em:
+
+```text
+C:\laragon\etc\apache2\sites-enabled\auto.Sistema-de-Triagem.test.conf
+```
+
+Com isso, a aplicação fica disponível em:
+
+```text
+http://Sistema-de-Triagem.test
+```
+
+Se o endereço não resolver, clique em **Menu > Reload** no Laragon para regenerar o vhost e o arquivo `hosts`. Como alternativa, adicione manualmente a entrada abaixo em `C:\Windows\System32\drivers\etc\hosts` (abrindo o editor como administrador):
+
+```text
+127.0.0.1 Sistema-de-Triagem.test
+```
+
+Também é possível executar a aplicação sem o vhost, usando o servidor embutido do Laravel:
 
 ```bash
 php artisan serve
 ```
 
-Para executar o ambiente de desenvolvimento do frontend:
+### Usuários de teste
 
-```bash
-npm run dev
-```
+O `HospitalSeeder` cria os seguintes usuários. A senha é a mesma para todos: `senha123`.
+
+| E-mail | Perfil |
+|---|---|
+| `administrador@tria.com` | Administrador |
+| `recepcao@tria.com` | Recepcionista |
+| `enfermeiro@tria.com` | Enfermeiro |
+| `medico@tria.com` | Médico |
+
+> No formulário de login é obrigatório selecionar o perfil correspondente ao usuário. Os valores enviados pelo formulário são minúsculos: `administrador`, `recepcionista`, `enfermeiro` e `medico`.
 
 ---
 
@@ -175,10 +233,21 @@ As demais rotas estão protegidas pelo middleware `auth`.
 
 | Método | Rota | Responsável | Descrição |
 |---|---|---|---|
-| GET | `/perfil` | `FuncionarioController` | Exibe o perfil do funcionário autenticado. |
-| GET | `/editar` | `FuncionarioController` | Direciona para a visualização do perfil. |
-| GET | `/gestaoFuncionarios` | `FuncionarioController` | Exibe os funcionários cadastrados. |
+| GET | `/perfil` | `FuncionarioController` | Exibe o perfil do funcionário autenticado (rota nomeada `funcionarios.perfil`). |
+| GET | `/editar` | `FuncionarioController` | Direciona para a visualização do perfil (rota nomeada `funcionarios.editar`). |
+| GET | `/gestaoFuncionarios` | `FuncionarioController` | Exibe os funcionários cadastrados (rota nomeada `admin`). |
 | POST | `/gestaoFuncionarios` | `FuncionarioController` | Cadastra um novo funcionário. |
+
+Rotas de recurso de `funcionarios`:
+
+| Método | Rota | Responsável | Descrição |
+|---|---|---|---|
+| GET | `/funcionarios` | `FuncionarioController@index` | Lista os funcionários. |
+| POST | `/funcionarios` | `FuncionarioController@store` | Cadastra um funcionário. |
+| GET | `/funcionarios/{id}/edit` | `FuncionarioController@edit` | Exibe o formulário de edição do funcionário. |
+| PUT/PATCH | `/funcionarios/{id}` | `FuncionarioController@update` | Atualiza os dados do funcionário. |
+
+As rotas `create`, `show` e `destroy` de `funcionarios` não existem.
 
 #### Pacientes e triagem
 
@@ -186,10 +255,18 @@ As demais rotas estão protegidas pelo middleware `auth`.
 |---|---|---|---|
 | GET | `/triagem` | `PacienteController` | Exibe informações relacionadas à fila de pacientes. |
 | POST | `/pacientes` | `PacienteController` | Cadastra um paciente. |
-| DELETE | `/triagem/{id}` | `PacienteController` | Remove um paciente da fila. |
+| DELETE | `/triagem/{id}` | `PacienteController@destroy` | Remove um paciente da fila. |
 | POST | `/triagem/adicionar` | `PacienteController` | Adiciona um paciente cadastrado à fila. |
 | POST | `/triagem/chamar/{id}` | `TriagemController` | Chama um paciente para triagem. |
 | GET | `/recepcionista` | `PacienteController` | Exibe a área da recepção. |
+
+A rota de recurso de `triagem` possui apenas o `store`:
+
+| Método | Rota | Responsável | Descrição |
+|---|---|---|---|
+| POST | `/triagem` | `TriagemController@store` | Registra a triagem de um paciente. |
+
+As rotas `create`, `show`, `edit`, `update` e `destroy` do recurso `triagem` não existem. A remoção de um paciente da fila é feita por `DELETE /triagem/{id}`, tratada por `PacienteController@destroy`.
 
 #### Atendimento médico
 
@@ -198,8 +275,6 @@ As demais rotas estão protegidas pelo middleware `auth`.
 | GET | `/medico` | `MedicoController` | Exibe a fila de atendimento médico. |
 | POST | `/medico/chamar/{id}` | `MedicoController` | Chama um paciente para atendimento. |
 | POST | `/medico/finalizar/{id}` | `MedicoController` | Finaliza o atendimento do paciente. |
-
-O projeto também utiliza rotas de recursos para `funcionarios` e `triagem`.
 
 ---
 
