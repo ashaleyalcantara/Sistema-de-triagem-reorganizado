@@ -12,7 +12,7 @@ class MedicoController extends Controller
         // 1. FILA LATERAL: Apenas quem está de fato aguardando o médico chamar
         $fila = Triagem::with('paciente')
             ->where('status', 'aguardando_medico')
-            ->orderByRaw("FIELD(classificacao, 'emergencia', 'muito_urgente', 'urgente', 'pouco_urgente', 'nao_urgente') ASC")
+            ->orderByRaw("CASE classificacao WHEN 'emergencia' THEN 1 WHEN 'muito_urgente' THEN 2 WHEN 'urgente' THEN 3 WHEN 'pouco_urgente' THEN 4 WHEN 'nao_urgente' THEN 5 ELSE 6 END ASC")
             ->orderBy('created_at', 'asc')
             ->get();
         
