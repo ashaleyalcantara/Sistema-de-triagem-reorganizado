@@ -28,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
     // Perfil do Funcionário Logado (Agora vai funcionar!)
     Route::get('/perfil', [FuncionarioController::class, 'perfil'])->name('funcionarios.perfil');
 
-    Route::get('/editar', [FuncionarioController::class, 'perfil'])->name('funcionarios.perfil');
+    Route::get('/editar', [FuncionarioController::class, 'perfil'])->name('funcionarios.editar');
 
     // Triagem e Pacientes
     Route::get('/triagem', [PacienteController::class, 'index'])->name('triagem.index');
@@ -39,9 +39,11 @@ Route::middleware(['auth'])->group(function () {
     
     Route::get('/recepcionista', [PacienteController::class, 'index'])->name('recepcionista');
     
-    // Resources
-    Route::resource('funcionarios', FuncionarioController::class);
-    Route::resource('triagem', TriagemController::class);
+    // Resources (apenas as ações implementadas nos controllers)
+    Route::resource('funcionarios', FuncionarioController::class)
+        ->only(['index', 'store', 'edit', 'update']);
+    Route::resource('triagem', TriagemController::class)
+        ->only(['store']);
 
     // Rotas do Médico
     Route::get('/medico', [MedicoController::class, 'index'])->name('medico.index');

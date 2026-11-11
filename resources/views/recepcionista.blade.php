@@ -376,7 +376,7 @@
 
 
                         @if (!empty($search))
-                            <a href="{{ route('dashboard') }}"
+                            <a href="{{ route('recepcionista') }}"
                                 class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-red-400 hover:text-red-600 font-medium">
 
                                 Limpar
