@@ -1,29 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+@extends('layouts.guest')
 
-<head>
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+@section('title', 'Tria - Acessar o sistema')
+@section('body-class', 'bg-[#49c5e3] min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased font-sans')
 
-    <style>
-    html, body, button, input, select, textarea {
-        font-family: 'Montserrat', sans-serif !important;
-    }
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tria - Acessar o sistema</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    @vite(['resources/js/login.js'])
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
+@push('scripts')
+    @vite('resources/js/login.js')
+@endpush
 
-<body class="bg-[#49c5e3] min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased font-sans">
-
+@section('content')
     <div class="w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-
         <div class="flex flex-col items-center justify-center text-center">
             <div class="w-36 h-36 md:w-60 md:h-60 bg-white rounded-full flex items-center justify-center p-4 shadow-md">
                 <img src="{{ asset('images/LogoOficial.svg') }}" alt="Logo Tria"
@@ -35,7 +20,6 @@
         </div>
 
         <div class="w-full max-w-md bg-white rounded-2xl p-5 md:p-8 shadow-xl">
-
             <div class="flex items-center gap-3 md:gap-4 mb-6">
                 <div
                     class="bg-[#00b4d8] text-white p-3 rounded-xl flex items-center justify-center text-lg md:text-xl shrink-0 w-12 h-12">
@@ -145,13 +129,6 @@
                     Entrar
                 </button>
             </form>
-
         </div>
     </div>
-
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-
-</html>
+@endsection

@@ -1,8 +1,41 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import '@fontsource-variable/montserrat';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
 
 @theme {
-    --font-sans: 'Montserrat', sans-serif;
+    --font-sans: 'Montserrat Variable', 'Montserrat', sans-serif;
+}
+
+@layer base {
+    html,
+    body,
+    button,
+    input,
+    select,
+    textarea {
+        font-family: var(--font-sans);
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@keyframes pulse-custom {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.piscar {
+    animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

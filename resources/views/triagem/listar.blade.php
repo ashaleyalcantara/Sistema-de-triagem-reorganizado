@@ -30,7 +30,7 @@
 
             <div class="flex items-center space-x-2 text-slate-400 text-xs">
                 @if ($is_atual && $item->status === 'aguardando')
-                    <form action="{{ route('triagem.chamar', $item->id) }}" method="POST">
+                    <form action="{{ route('triagem.chamar', $item) }}" method="POST">
                         @csrf
                         <button type="submit" class="text-cyan-500 hover:text-cyan-600 transition p-1"
                             title="Chamar paciente no Painel">

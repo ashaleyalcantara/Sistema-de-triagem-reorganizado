@@ -18,7 +18,7 @@
             <input type="text" id="pressao" name="pressao" required
                 class="w-full px-3 py-2 text-center border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-500 transition text-sm">
         </div>
-        
+
         <div>
             <label for="fc" class="block text-sm font-semibold text-slate-700 mb-1.5 text-center">FC</label>
             <input type="text" id="fc" name="frequencia_cardiaca" required
@@ -34,7 +34,7 @@
 
     <div class="space-y-3">
         <label class="block text-sm font-semibold text-slate-700">NÍVEL DE URGÊNCIA</label>
-        
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-white cursor-pointer hover:bg-slate-50 transition">
                 <div class="flex items-center space-x-2 text-sm font-medium text-slate-700">
@@ -79,7 +79,7 @@
     </div>
 
     <div class="pt-4 flex justify-center">
-        <button type="submit" 
+        <button type="submit"
             class="w-full max-w-xs py-2.5 bg-cyan-500 text-white font-semibold rounded-full hover:bg-cyan-600 transition text-sm shadow-sm text-center cursor-pointer">
             Concluir triagem
         </button>
