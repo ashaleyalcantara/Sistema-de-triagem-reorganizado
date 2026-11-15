@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Perfil;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -32,14 +33,40 @@ class Funcionario extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    // O LARAVEL PRECISA DISSO PARA SABER ONDE ESTÁ A SENHA CRIPIOGRAFADA
+    // O Laravel precisa saber onde está a senha criptografada.
     public function getAuthPassword()
     {
         return $this->senha;
     }
 
-    public function isAdministrador(): bool { return $this->perfil === 'Administrador'; }
-    public function isRecepcionista(): bool { return $this->perfil === 'Recepcionista'; }
-    public function isEnfermeiro(): bool { return $this->perfil === 'Enfermeiro'; }
-    public function isMedico(): bool { return $this->perfil === 'Médico'; }
+    public function isAdministrador(): bool
+    {
+        return $this->perfil === Perfil::Administrador->value;
+    }
+
+    public function isRecepcionista(): bool
+    {
+        return $this->perfil === Perfil::Recepcionista->value;
+    }
+
+    public function isEnfermeiro(): bool
+    {
+        return $this->perfil === Perfil::Enfermeiro->value;
+    }
+
+    public function isMedico(): bool
+    {
+        return $this->perfil === Perfil::Medico->value;
+    }
+
+    public function redirectRouteName(): ?string
+    {
+        return match (Perfil::tryFrom((string) $this->perfil)) {
+            Perfil::Administrador => 'admin',
+            Perfil::Recepcionista => 'recepcionista',
+            Perfil::Enfermeiro => 'triagem.index',
+            Perfil::Medico => 'medico.index',
+            default => null,
+        };
+    }
 }

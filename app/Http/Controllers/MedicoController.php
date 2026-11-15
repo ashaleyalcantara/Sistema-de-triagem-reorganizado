@@ -2,63 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Triagem;
+use App\Services\MedicoService;
+use Illuminate\Http\Request;
 
 class MedicoController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private readonly MedicoService $medicoService)
     {
-        // 1. FILA LATERAL: Apenas quem está de fato aguardando o médico chamar
-        $fila = Triagem::with('paciente')
-            ->where('status', 'aguardando_medico')
-            ->orderByRaw("CASE classificacao WHEN 'emergencia' THEN 1 WHEN 'muito_urgente' THEN 2 WHEN 'urgente' THEN 3 WHEN 'pouco_urgente' THEN 4 WHEN 'nao_urgente' THEN 5 ELSE 6 END ASC")
-            ->orderBy('created_at', 'asc')
-            ->get();
-        
-        $pacientesNaFila = $fila->count();
-        
-        $atendidosHoje = Triagem::where('status', 'concluido')
-            ->whereDate('updated_at', today())
-            ->count();
-
-        // 2. PACIENTE ATIVO: Busca quem está em atendimento ativo
-        $pacienteSelecionado = Triagem::with('paciente')
-            ->where('status', 'em_consulta')
-            ->latest('updated_at')
-            ->first();
-        
-        // Se ninguém foi chamado ainda, sugere o primeiro da fila na tela
-        if (!$pacienteSelecionado) {
-            $pacienteSelecionado = $fila->first();
-        }
-
-        return view('medico.dashboard', compact('fila', 'pacientesNaFila', 'atendidosHoje', 'pacienteSelecionado'));
     }
 
-    public function chamarPaciente($id)
+    public function index(Request $request)
     {
-        // Limpa chamadas anteriores que ficaram presas por ventura
-        Triagem::where('status', 'em_consulta')->update(['status' => 'concluido']);
+        $fila = $this->medicoService->fila();
 
-        $itemFila = Triagem::findOrFail($id);
-        
-        $itemFila->update([
-            'status' => 'em_consulta',
-            'updated_at' => now()
+        return view('medico.dashboard', [
+            'fila' => $fila,
+            'pacientesNaFila' => $fila->count(),
+            'atendidosHoje' => $this->medicoService->atendidosHoje(),
+            'pacienteSelecionado' => $this->medicoService->pacienteSelecionado($fila),
         ]);
+    }
+
+    public function chamarPaciente(Triagem $triagem)
+    {
+        $this->medicoService->chamar($triagem);
 
         return redirect()->back()->with('success', 'Paciente chamado no painel com sucesso!');
     }
 
-    public function finalizarConsulta(Request $request, $id)
+    public function finalizarConsulta(Request $request, Triagem $triagem)
     {
-        $itemFila = Triagem::findOrFail($id);
-        
-        $itemFila->update([
-            'status' => 'concluido',
-            'updated_at' => now()
-        ]);
+        $this->medicoService->finalizar($triagem);
 
         return redirect()->route('medico.index')->with('success', 'Consulta finalizada com sucesso!');
     }

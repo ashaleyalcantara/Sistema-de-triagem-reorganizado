@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Perfil;
+use App\Http\Requests\LoginRequest;
 use App\Models\Funcionario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,74 +14,47 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            $perfil = Auth::user()->perfil;
+            $redirect = $this->redirectRouteName(Auth::user());
 
-            // Ajustado para bater EXATAMENTE com os nomes do seu web.php
-            if ($perfil === 'Administrador') {
-                return redirect()->route('admin'); // Corrigido aqui
-            } elseif ($perfil === 'Recepcionista') {
-                return redirect()->route('recepcionista');
-            } elseif ($perfil === 'Enfermeiro') {
-                return redirect()->route('triagem.index');
-            } elseif ($perfil === 'Médico') {
-                return redirect()->route('medico.index');
+            if ($redirect) {
+                return redirect()->route($redirect);
             }
         }
-        
+
         return view('login.login');
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'senha' => ['required'],
-            'perfil' => ['required', 'in:administrador,recepcionista,enfermeiro,medico']
-        ], [
-            'email.required' => 'O e-mail é obrigatório.',
-            'email.email' => 'Insira um e-mail válido.',
-            'senha.required' => 'A senha é obrigatória.',
-            'perfil.required' => 'Selecione um perfil.',
-            'perfil.in' => 'Perfil inválido.'
-        ]);
+        $credentials = $request->validated();
 
-        if ($credentials['perfil'] === 'medico') {
-            $perfilBanco = 'Médico';
-        } else {
-            $perfilBanco = ucfirst($credentials['perfil']); 
-        }
+        $perfilSelecionado = match ($credentials['perfil']) {
+            'administrador' => Perfil::Administrador,
+            'recepcionista' => Perfil::Recepcionista,
+            'enfermeiro' => Perfil::Enfermeiro,
+            'medico' => Perfil::Medico,
+        };
 
         $funcionario = Funcionario::where('email', $credentials['email'])->first();
 
-        if ($funcionario && Hash::check($credentials['senha'], $funcionario->senha)) {
-            
-            if ($funcionario->perfil !== $perfilBanco) {
-                return back()->withErrors([
-                    'login_error' => 'Este usuário não possui o cargo de ' . $perfilBanco . '.',
-                ])->withInput($request->only('email', 'perfil'));
-            }
-
-            // Realiza o login na sessão
-            Auth::login($funcionario);
-            $request->session()->regenerate();
-
-            // Redirecionamentos corrigidos de acordo com o web.php
-            if ($funcionario->perfil === 'Administrador') {
-                return redirect()->route('admin');
-            } elseif ($funcionario->perfil === 'Recepcionista') {
-                return redirect()->route('recepcionista');
-            } elseif ($funcionario->perfil === 'Enfermeiro') {
-                return redirect()->route('triagem.index');
-            } elseif ($funcionario->perfil === 'Médico') {
-                return redirect()->route('medico.index');
-            }
-
-            return redirect('/login');
+        if (! $funcionario || ! Hash::check($credentials['senha'], $funcionario->senha)) {
+            return back()->withErrors([
+                'login_error' => 'Usuário ou senha inválidos.',
+            ])->withInput($request->only('email', 'perfil'));
         }
 
-        return back()->withErrors([
-            'login_error' => 'Usuário ou senha inválidos.',
-        ])->withInput($request->only('email', 'perfil'));
+        if ($funcionario->perfil !== $perfilSelecionado->value) {
+            return back()->withErrors([
+                'login_error' => 'Este usuário não possui o cargo de '.$perfilSelecionado->label().'.',
+            ])->withInput($request->only('email', 'perfil'));
+        }
+
+        Auth::login($funcionario);
+        $request->session()->regenerate();
+
+        $redirect = $this->redirectRouteName($funcionario);
+
+        return $redirect ? redirect()->route($redirect) : redirect('/login');
     }
 
     public function logout(Request $request)
@@ -87,6 +62,12 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login');
+    }
+
+    private function redirectRouteName(Funcionario $funcionario): ?string
+    {
+        return $funcionario->redirectRouteName();
     }
 }

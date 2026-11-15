@@ -33,8 +33,8 @@ return new class extends Migration
             ])->nullable();
             
             // Status do fluxo de atendimento
-            // 'aguardando_triagem' (com enfermeiro), 'aguardando_medico', 'em_atendimento', 'concluido'
-            $table->string('status')->default('aguardando_triagem'); 
+            // 'aguardando', 'em_triagem', 'aguardando_medico', 'em_consulta', 'concluido', 'removido'
+            $table->string('status')->default('aguardando');
             
             $table->timestamps();
         });

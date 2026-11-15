@@ -1,57 +1,59 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\MedicoController;
-use App\Http\Controllers\FuncionarioController;  
+use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\TriagemController;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
-// ROTAS PÚBLICAS (Não precisa estar logado)
+// ROTAS PÚBLICAS
 // ==========================================
 
-// Tela inicial (Painel da TV)
 Route::get('/', [TriagemController::class, 'painelTV'])->name('painel.chamada');
 
-// Autenticação
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
 
 // ==========================================
-// ROTAS PROTEGIDAS (Só acessa se estiver LOGADO)
+// ROTAS PROTEGIDAS
 // ==========================================
+
 Route::middleware(['auth'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Perfil do Funcionário Logado (Agora vai funcionar!)
+    // Perfil (qualquer usuário autenticado)
     Route::get('/perfil', [FuncionarioController::class, 'perfil'])->name('funcionarios.perfil');
+    Route::get('/funcionarios/{funcionario}/editar', [FuncionarioController::class, 'edit'])->name('funcionarios.edit');
+    Route::put('/funcionarios/{funcionario}', [FuncionarioController::class, 'update'])->name('funcionarios.update');
 
-    Route::get('/editar', [FuncionarioController::class, 'perfil'])->name('funcionarios.editar');
+    // Gestão de Funcionários - Administrador
+    Route::middleware('role:Administrador')->group(function () {
+        Route::get('/gestaoFuncionarios', [FuncionarioController::class, 'index'])->name('admin');
+        Route::post('/gestaoFuncionarios', [FuncionarioController::class, 'store'])->name('funcionarios.store');
+        Route::delete('/funcionarios/{funcionario}', [FuncionarioController::class, 'destroy'])->name('funcionarios.destroy');
+    });
 
-    // Triagem e Pacientes
-    Route::get('/triagem', [PacienteController::class, 'index'])->name('triagem.index');
-    Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
-    Route::delete('/triagem/{id}', [PacienteController::class, 'destroy'])->name('triagem.destroy');
-    Route::post('/triagem/adicionar', [PacienteController::class, 'adicionarNaFila'])->name('triagem.adicionar');
-    Route::post('/triagem/chamar/{id}', [TriagemController::class, 'chamarPaciente'])->name('triagem.chamar');
-    
-    Route::get('/recepcionista', [PacienteController::class, 'index'])->name('recepcionista');
-    
-    // Resources (apenas as ações implementadas nos controllers)
-    Route::resource('funcionarios', FuncionarioController::class)
-        ->only(['index', 'store', 'edit', 'update']);
-    Route::resource('triagem', TriagemController::class)
-        ->only(['store']);
+    // Recepção de Pacientes
+    Route::middleware('role:Recepcionista')->group(function () {
+        Route::get('/recepcionista', [PacienteController::class, 'index'])->name('recepcionista');
+        Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
+        Route::post('/triagem/adicionar', [PacienteController::class, 'adicionarNaFila'])->name('triagem.adicionar');
+        Route::delete('/triagem/{triagem}', [PacienteController::class, 'destroy'])->name('triagem.destroy');
+    });
 
-    // Rotas do Médico
-    Route::get('/medico', [MedicoController::class, 'index'])->name('medico.index');
-    Route::post('/medico/finalizar/{id}', [MedicoController::class, 'finalizarConsulta'])->name('medico.finalizar');
-    Route::post('/medico/chamar/{id}', [MedicoController::class, 'chamarPaciente'])->name('medico.chamar');
+    // Triagem - Enfermeiro
+    Route::middleware('role:Enfermeiro')->group(function () {
+        Route::get('/triagem', [TriagemController::class, 'index'])->name('triagem.index');
+        Route::post('/triagem', [TriagemController::class, 'store'])->name('triagem.store');
+        Route::post('/triagem/chamar/{triagem}', [TriagemController::class, 'chamarPaciente'])->name('triagem.chamar');
+    });
 
-    // Gestão de Funcionários - ADMIN
-    Route::get('/gestaoFuncionarios', [FuncionarioController::class, 'index'])->name('admin');
-    Route::post('/gestaoFuncionarios', [FuncionarioController::class, 'store']);
-
+    // Consulta - Médico
+    Route::middleware('role:Médico')->group(function () {
+        Route::get('/medico', [MedicoController::class, 'index'])->name('medico.index');
+        Route::post('/medico/finalizar/{triagem}', [MedicoController::class, 'finalizarConsulta'])->name('medico.finalizar');
+        Route::post('/medico/chamar/{triagem}', [MedicoController::class, 'chamarPaciente'])->name('medico.chamar');
+    });
 });
