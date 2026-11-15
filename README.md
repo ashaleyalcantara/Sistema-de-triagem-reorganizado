@@ -6,6 +6,25 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?logo=sqlite&logoColor=white)
 
+## Arquitetura
+
+O projeto segue a divisão entre backend e frontend dentro do Laravel:
+
+- **Backend**
+  - `app/Http/Controllers`: controllers finos, responsáveis apenas por orquestrar a requisição e a resposta.
+  - `app/Http/Requests`: validação de formulários.
+  - `app/Services`: regras de negócio da triagem, fila, pacientes e funcionários.
+  - `app/Policies` e `app/Http/Middleware`: autorização por perfil.
+  - `app/Enums`: perfis, status de triagem e classificações de risco.
+  - `routes/web.php`: rotas web agrupadas por perfil de acesso.
+- **Frontend**
+  - `resources/views/layouts`: layouts base das páginas autenticadas e convidados.
+  - `resources/views/components`: header, mensagens de feedback e componentes visuais reutilizáveis.
+  - `resources/views`: páginas e parciais Blade.
+  - `resources/css` e `resources/js`: estilos e scripts compilados pelo Vite, sem dependência de CDNs de Tailwind/Lucide/Alpine.
+
+O fluxo esperado é: rota → controller → service → model, com as views cuidando apenas da apresentação.
+
 ## Configuração do Ambiente
 
 ### Tecnologias utilizadas
